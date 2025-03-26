@@ -33,6 +33,6 @@ hr_feats = upsampler(lr_feats, normalized_img_tensor) # 1, 384, 224, 224
 # ## You can also upsample to any shape you want; Just change the guidance image shape
 # H, W = 112, 112
 # img_tensor_112 = F.interpolate(normalized_img_tensor, size=(H, W), mode='bilinear', align_corners=False)
-# hr_feats_112 = upsampler(channelnorm(lr_feats), img_tensor_112) # 1, 384, 112, 112
+# hr_feats_112 = upsampler(lr_feats, img_tensor_112) # 1, 384, 112, 112
 
 plot_feats(unnorm(normalized_img_tensor)[0], lr_feats[0], hr_feats[0], 'examples/feats.png')
