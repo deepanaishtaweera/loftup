@@ -12,7 +12,7 @@
 ## TODO
 - [ ] Install
 - [x] Inference with pretrained upsamplers
-- [ ]Evaluation on downstream tasks
+- [ ] Evaluation on downstream tasks
 - [ ] Training LoftUp upsamplers
 - [ ] Citation
 
