@@ -12,7 +12,7 @@ kernel_size = 14
 lr_size = 16
 load_size = 224
 
-upsampler_path = "/mnt/haiwen/pretrained_models/FeatUp/checkpoints/loftup_dinov2.ckpt"
+upsampler_path = "loftup_dinov2.ckpt"
 upsampler = load_loftup_checkpoint(upsampler_path, 384, lr_pe_type="sine")
 upsampler = upsampler.to('cuda')
 
