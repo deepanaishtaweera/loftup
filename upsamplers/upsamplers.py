@@ -135,8 +135,38 @@ def load_loftup_checkpoint(upsampler_path, n_dim, lr_pe_type="sine", lr_size=16)
     # return channelnorm, upsampler
     return UpsamplerwithChannelNorm(upsampler, channelnorm)
 
-def get_upsampler(upsampler, dim, all_layer_channels=512, lr_size=16, n_freqs=20, cfg=None, cat_lr_feats=True, lr_pe="sine"):
+class Bilinear(torch.nn.Module):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def forward(self, feats, img):
+        _, _, h, w = img.shape
+        return F.interpolate(feats, (h, w), mode="bilinear")
+
+def get_upsampler(upsampler, dim, lr_size=16, n_freqs=20, cfg=None, cat_lr_feats=True, lr_pe_type="sine"):
     if upsampler == "loftup":
-        return LoftUp(dim, n_freqs=n_freqs, lr_size=lr_size, lr_pe=lr_pe)
+        return LoftUp(dim, n_freqs=n_freqs, lr_size=lr_size, lr_pe_type=lr_pe_type)
+    elif upsampler == "bilinear":
+        return Bilinear()
+    # elif upsampler == "lift":
+        
     else:
         raise ValueError(f"Upsampler {upsampler} not implemented")
+
+def load_upsampler_weights(upsampler, upsampler_path, dim, freeze=True):
+    channelnorm = ChannelNorm(dim)
+    ckpt_weight = torch.load(upsampler_path)['state_dict']
+    channelnorm_checkpoint = {k: v for k, v in ckpt_weight.items() if 'model.1' in k} # dict_keys(['model.1.norm.weight', 'model.1.norm.bias'])
+    channelnorm_checkpoint = {k.replace('model.1.', ''): v for k, v in channelnorm_checkpoint.items()}
+    upsampler_ckpt_weight = {k: v for k, v in ckpt_weight.items() if k.startswith('upsampler')}
+    upsampler_ckpt_weight = {k.replace('upsampler.', ''): v for k, v in upsampler_ckpt_weight.items()}
+
+    upsampler.load_state_dict(upsampler_ckpt_weight)
+    channelnorm.load_state_dict(channelnorm_checkpoint)
+    if freeze:
+        for param in upsampler.parameters():
+            param.requires_grad = False
+        for param in channelnorm.parameters():
+            param.requires_grad = False
+    return UpsamplerwithChannelNorm(upsampler, channelnorm)
