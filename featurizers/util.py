@@ -7,6 +7,11 @@ def get_featurizer(name, activation_type="token", **kwargs):
         patch_size = 14
         model = DINOv2Featurizer("dinov2_vits14", patch_size, activation_type)
         dim = 384
+    elif name == "clip":
+        from .CLIP import CLIPFeaturizer
+        patch_size = 16
+        model = CLIPFeaturizer()
+        dim = 512
     elif name == "maskclip":
         from .MaskCLIP import MaskCLIPFeaturizer
         patch_size = 16
