@@ -439,7 +439,17 @@ class DINOv2Featurizer(nn.Module):
         self.feat_type = feat_type
 
         self.n_feats = 128
-        self.model = torch.hub.load('facebookresearch/dinov2', 'dinov2_vits14')
+        self.model = torch.hub.load('facebookresearch/dinov2', arch)
+        if "vits" in arch:
+            self.dim = 384
+        elif "vitb" in arch:
+            self.dim = 768
+        elif "vitl" in arch:
+            self.dim = 1024
+        elif "vitg" in arch:
+            self.dim = 1536
+        else:
+            raise NotImplementedError(f"Unknown architecture {arch}")
 
     def get_cls_token(self, img):
         return self.model.forward(img)
@@ -447,7 +457,7 @@ class DINOv2Featurizer(nn.Module):
     def forward(self, img, n=1, include_cls=False):
         h = img.shape[2] // self.patch_size
         w = img.shape[3] // self.patch_size
-        return self.model.forward_features(img)["x_norm_patchtokens"].reshape(-1, h, w, 384).permute(0, 3, 1, 2)
+        return self.model.forward_features(img)["x_norm_patchtokens"].reshape(-1, h, w, self.dim).permute(0, 3, 1, 2)
     
     def forward_all_layers(self, img):
         num_layers = len(self.model.blocks)
