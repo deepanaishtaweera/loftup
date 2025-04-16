@@ -1,8 +1,8 @@
 """
 PART 1: First run the below to generate outputs
-python eval_davis.py --dataroot /mnt/haiwen/datasets/DAVIS --model_type dinov2_vits14 --output_dir /mnt/haiwen/datasets/DAVIS/outputs/loftup --imsize 224 --upsampler_path /path/to/loftup_checkpoint.pth
+python eval_davis_video_seg.py --dataroot /mnt/haiwen/datasets/DAVIS --model_type dinov2_vits14 --output_dir /mnt/haiwen/datasets/DAVIS/outputs/loftup --imsize 224 --upsampler_path /path/to/loftup_checkpoint.pth
 PART 2: Then the below command computes the scores
-python davis2017-evaluation/evaluation_method.py --davis_path /YOUR/PATH/TO/DAVIS --task semi-supervised --results_path davis_outputs/lift_dino_vits16/davis_vidseg_224_layer11 --imsize 224
+python davis2017-evaluation/evaluation_method.py --davis_path /YOUR/PATH/TO/DAVIS --task semi-supervised --results_path davis_outputs/loftup/davis_vidseg_224 --imsize 224
 """
 import os
 import argparse
