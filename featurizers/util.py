@@ -22,13 +22,13 @@ def get_featurizer(name, activation_type="token", **kwargs):
         patch_size = 16
         model = MaskCLIPFeaturizer()
         dim = 512
-    elif name == "sigclip":
-        from .SigCLIP import SigLIPFeaturizer
+    elif name == "siglip":
+        from .SigLIP import SigLIPFeaturizer
         patch_size = 16
         model = SigLIPFeaturizer("hf-hub:timm/ViT-B-16-SigLIP", patch_size)
         dim = 768
-    elif name == "sigclip2":
-        from .SigCLIP import SigLIPFeaturizer
+    elif name == "siglip2":
+        from .SigLIP import SigLIPFeaturizer
         patch_size = 16
         model = SigLIPFeaturizer("hf-hub:timm/ViT-B-16-SigLIP2", patch_size)
         dim = 768

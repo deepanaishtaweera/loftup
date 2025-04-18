@@ -37,22 +37,3 @@ class SigLIPFeaturizer(nn.Module):
         h, w = img.shape[-2] // self.patch_size, img.shape[-1] // self.patch_size
         features = features.permute(0, 2, 1).reshape(-1, self.dim, h, w)
         return features
-
-# class SigLIP2Featurizer(nn.Module):
-
-#     def __init__(self, arch='hf-hub:timm/ViT-B-16-SigLIP2', patch_size=16, feat_type=None):
-#         super().__init__()
-#         self.arch = arch
-#         self.patch_size = patch_size
-#         self.feat_type = feat_type
-
-#         self.dim = 768
-#         siglip = create_model_from_pretrained(arch)
-#         self.model = siglip.visual.trunk
-#         self.model.make_preprocessor_external()
-
-#     def forward(self, img, n=1, include_cls=False):
-#         features = self.model.forward_features(img) # b, hxw, c
-#         h, w = img.shape[-2] // self.patch_size, img.shape[-1] // self.patch_size
-#         features = features.permute(0, 2, 1).reshape(-1, self.dim, h, w)
-#         return features

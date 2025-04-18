@@ -1,6 +1,6 @@
 # Environment Args
-output_root: '/mnt/haiwen/pretrained_models/LoftUp' # '../output_root'
-pytorch_data_dir: '/mnt/haiwen/datasets' # '/mnt/haiwen/datasets'
+output_root: 'output_dir' # '../output_root'
+pytorch_data_dir: 'datasets' # '/mnt/haiwen/datasets'
 
 # Dataset args
 dataset: "cocostuff"

@@ -1,4 +1,5 @@
 from upsamplers import load_loftup_checkpoint, norm, unnorm
+from featurizers import get_featurizer
 from utils import plot_feats
 
 import torch
@@ -12,7 +13,7 @@ kernel_size = 14
 lr_size = 16
 load_size = 224
 
-upsampler_path = "loftup_dinov2.ckpt"
+upsampler_path = "/path/to/loftup_dinov2.ckpt"
 upsampler = load_loftup_checkpoint(upsampler_path, 384, lr_pe_type="sine")
 upsampler = upsampler.to('cuda')
 
@@ -36,3 +37,12 @@ hr_feats = upsampler(lr_feats, normalized_img_tensor) # 1, 384, 224, 224
 # hr_feats_112 = upsampler(lr_feats, img_tensor_112) # 1, 384, 112, 112
 
 plot_feats(unnorm(normalized_img_tensor)[0], lr_feats[0], hr_feats[0], 'examples/feats.png')
+
+
+#### Alternative usage with featurizer ####
+
+model = get_featurizer("dinov2")
+lr_feats = model(normalized_img_tensor)
+hr_feats = upsampler(lr_feats, normalized_img_tensor)
+
+## This should give the same result as the original usage
