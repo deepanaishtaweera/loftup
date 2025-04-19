@@ -17,11 +17,6 @@ def get_featurizer(name, activation_type="token", **kwargs):
         patch_size = 16
         model = CLIPFeaturizer()
         dim = 512
-    elif name == "maskclip":
-        from .MaskCLIP import MaskCLIPFeaturizer
-        patch_size = 16
-        model = MaskCLIPFeaturizer()
-        dim = 512
     elif name == "siglip":
         from .SigLIP import SigLIPFeaturizer
         patch_size = 16
