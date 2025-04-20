@@ -40,7 +40,9 @@ We provide example code for using LoftUp in [example_usage.py](example_usage.py)
 |Backbone Name          | Featurizer Class              | Download                                  |
 |-------------------| ---|------------------------------------------------|
 | DINOv2 S/14     | [dinov2](featurizers/DINOv2.py)     | [Google Drive Link](https://drive.google.com/file/d/1Sse4gq2dCSNT-rnTVja7pG9ogIGfT0Ue/view?usp=drive_link)   |
+| DINOv2 S/14 + Reg | [dinov2s_reg](featurizers/DINOv2.py)     | [Google Drive Link](https://drive.google.com/file/d/1gzLyt4vPKZvWxt_9f8whUt9rOT0LkFlH/view?usp=drive_link)|
 | DINOv2 B/14 | [dinov2b](featurizers/DINOv2.py) | [Google Drive Link](https://drive.google.com/file/d/1OloNcimH4u4LGw1G07i5BAcinFHiofsn/view?usp=sharing) |
+| DINOv2 B/14 + Reg | [dinov2b_reg](featurizers/DINOv2.py)     | [Google Drive Link](https://drive.google.com/file/d/1F-qES95VjQF_4gwigFWfJfVCLS9yaZ6w/view?usp=drive_link)|
 | CLIP ViT B/16 | [clip](featurizers/CLIP.py) |[Google Drive Link](https://drive.google.com/file/d/18uBEvtugyidIu7r50A0Vk-e5vLSkUrcG/view?usp=drive_link) |
 |SigLIP ViT B/16 | [siglip](featurizers/SigLIP.py) | [Google Drive Link](https://drive.google.com/file/d/1_hL1rCPbXg3HoJBfW5L_kRL9Zufa64lf/view?usp=drive_link)|
 |SigLIP2 ViT B/16 | [siglip2](featurizers/SigLIP.py) | [Google Drive Link](https://drive.google.com/file/d/1FnXbTqaf2ljy-TFVThalGS877oFO_rq5/view?usp=drive_link)|

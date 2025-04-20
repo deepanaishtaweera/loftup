@@ -12,6 +12,16 @@ def get_featurizer(name, activation_type="token", **kwargs):
         patch_size = 14
         model = DINOv2Featurizer("dinov2_vitb14", patch_size, activation_type)
         dim = 768
+    elif name == "dinov2s_reg":
+        from .DINOv2 import DINOv2Featurizer
+        patch_size = 14
+        model = DINOv2Featurizer("dinov2_vits14_reg", patch_size, activation_type)
+        dim = 384
+    elif name == "dinov2b_reg":
+        from .DINOv2 import DINOv2Featurizer
+        patch_size = 14
+        model = DINOv2Featurizer("dinov2_vitb14_reg", patch_size, activation_type)
+        dim = 768
     elif name == "clip":
         from .CLIP import CLIPFeaturizer
         patch_size = 16
