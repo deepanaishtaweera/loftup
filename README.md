@@ -89,4 +89,16 @@ For depth and normal estimation, please check out [Probe3D](https://github.com/m
 We will provide training code soon.
 
 ## Citation
-The paper is going to be released on arxiv soon!
+If you find our work helpful, please cite:
+
+```
+@misc{huang2025loftuplearningcoordinatebasedfeature,
+      title={LoftUp: Learning a Coordinate-Based Feature Upsampler for Vision Foundation Models}, 
+      author={Haiwen Huang and Anpei Chen and Volodymyr Havrylov and Andreas Geiger and Dan Zhang},
+      year={2025},
+      eprint={2504.14032},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2504.14032}, 
+}
+```
