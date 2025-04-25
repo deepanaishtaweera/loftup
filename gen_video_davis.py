@@ -22,7 +22,7 @@ from torchvision import transforms
 from torchvision.datasets import ImageFolder
 from urllib.request import urlopen
 
-from tools.eval_video_segmentation import eval_video_tracking_davis, read_seg, read_frame_list
+from tools.eval_video_segmentation import plot_video_features_davis, read_seg, read_frame_list
 from featurizers import get_featurizer
 from upsamplers import load_loftup_checkpoint
 
@@ -47,6 +47,8 @@ class FeaturizerWithUpsampling(nn.Module):
             ### In DAVIS Experiments, we only upsample to img//2 size; so we use guidance image of size img//2 ###
             guidance_img = F.interpolate(img, size=(img.shape[-2]//2, img.shape[-1]//2), mode='bilinear', align_corners=False)
             up_feat = self.upsampler(feat, guidance_img)
+        else:
+            return feat, None
         up_feat = up_feat.reshape(up_feat.shape[0], up_feat.shape[1], -1)
         up_feat = up_feat.permute(0, 2, 1)
         if return_origianl_feat:
@@ -56,7 +58,6 @@ class FeaturizerWithUpsampling(nn.Module):
     
 
 def run_video_segmentation(args):
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
     extractor = FeaturizerWithUpsampling(args.model_type, args.upsampler_path)
     if "siglip" in args.model_type:
         mean = (0.5, 0.5, 0.5)
@@ -82,7 +83,7 @@ def run_video_segmentation(args):
         frame_list = read_frame_list(video_dir)
         seg_path = frame_list[0].replace("JPEGImages", "Annotations").replace("jpg", "png")
         first_seg, seg_ori = read_seg(seg_path, factor=2, scale_size=[args.imsize, args.imsize]) ## 8x upsampling
-        eval_video_tracking_davis(args, extractor, transform, frame_list, video_dir, first_seg, seg_ori, color_palette)
+        plot_video_features_davis(args, extractor, transform, frame_list, video_dir)
 
 
 def parse_args():

@@ -14,7 +14,8 @@ from torch.nn import functional as F
 from PIL import Image
 from torchvision import transforms
 from einops import rearrange
-
+from utils import pca
+import matplotlib.pyplot as plt
 @torch.no_grad()
 def eval_video_tracking_davis(args, model, transform, frame_list, video_dir, first_seg, seg_ori, color_palette):
     """
@@ -34,7 +35,8 @@ def eval_video_tracking_davis(args, model, transform, frame_list, video_dir, fir
     frame1, ori_h, ori_w = read_frame(frame_list[0])
     # extract first frame feature
 
-    frame1_feat = extract_feature(args, model, transform, frame1, patch_size=model.patch_size, imsize=args.imsize).T #  dim x h*w
+    frame1_feat, _ = extract_feature(args, model, transform, frame1, patch_size=model.patch_size, imsize=args.imsize) #  dim x h*w
+    frame1_feat = frame1_feat.T # dim x h*w
 
     # saving first segmentation
     out_path = os.path.join(video_folder, "00000.png")
@@ -70,6 +72,105 @@ def eval_video_tracking_davis(args, model, transform, frame_list, video_dir, fir
         frame_nm = frame_list[cnt].split('/')[-1].replace(".jpg", ".png")
         imwrite_indexed(os.path.join(video_folder, frame_nm), frame_tar_seg, color_palette)
 
+@torch.no_grad()
+def plot_video_features_davis(args, model, transform, frame_list, video_dir):
+    """
+    Plot the video features of the video
+    """
+    os.makedirs(args.output_dir, exist_ok=True)
+    os.makedirs(os.path.join(args.output_dir, f'davis_vidfeat_224'), exist_ok=True)
+    output_dir = os.path.join(args.output_dir, f'davis_vidfeat_224')
+
+    video_folder = os.path.join(output_dir, video_dir.split('/')[-1])
+    os.makedirs(video_folder, exist_ok=True)
+
+    original_imgs = []
+    features = []
+    upsampled_features = []
+
+    # first frame
+    frame1, ori_h, ori_w = read_frame(frame_list[0])
+    # extract first frame feature
+
+    frame1_feat, frame1_original_feat = extract_feature(args, model, transform, frame1, patch_size=model.patch_size, imsize=args.imsize, return_origianl_feat=True) #  dim x h*w
+
+    original_imgs.append(frame1) # format: list of PIL images
+    features.append(frame1_original_feat) # format: dim x h*w
+    upsampled_features.append(frame1_feat) # format: dim x h*w
+
+
+    for cnt in tqdm(range(1, len(frame_list))):
+        frame_tar = read_frame(frame_list[cnt])[0]
+
+        frame_tar_feat, frame_tar_original_feat = extract_feature(args, model, transform, frame_tar, patch_size=model.patch_size, imsize=args.imsize, return_origianl_feat=True) #  dim x h*w
+
+        original_imgs.append(frame_tar)
+        features.append(frame_tar_original_feat)
+        upsampled_features.append(frame_tar_feat)
+    
+    ## Perform PCA on the original features
+    original_feats_pca, fit_pca = pca(features)
+    upsampled_feats_pca, _ = pca(upsampled_features, fit_pca=fit_pca)
+
+    def add_label(frame, text):
+        labeled = frame.copy()
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        cv2.putText(labeled, text, (20, 50), font, 1.5, (255, 255, 255), 3, cv2.LINE_AA)
+        return labeled
+
+    def feature_to_rgb(feat, shape):
+        feat = np.array(feat)
+        feat -= feat.min()
+        if feat.max() > 0:
+            feat /= feat.max()
+        feat = (feat * 255).astype(np.uint8)
+        return feat.reshape(*shape, 3)
+
+    final_frames = []
+    for frame_idx, (orig_pil, f_small, f_big) in enumerate(zip(original_imgs, original_feats_pca, upsampled_feats_pca)):
+        # Convert original image to RGB array
+
+        orig = np.array(orig_pil)
+        # Feature shapes
+        up_size = 112
+        feat_size = 16
+
+        # Convert features to RGB images
+        dino_rgb = feature_to_rgb(f_small, (feat_size, feat_size))
+        featup_rgb = feature_to_rgb(f_big, (up_size, up_size))
+
+        # Resize small DINO feature to (H, W)
+        dino_rgb_resized = cv2.resize(dino_rgb, (ori_w, ori_h), interpolation=cv2.INTER_NEAREST)
+        featup_rgb_resized = cv2.resize(featup_rgb, (ori_w, ori_h), interpolation=cv2.INTER_NEAREST)
+
+        # Add labels
+        orig_labeled = add_label(orig, "Input")
+        dino_labeled = add_label(dino_rgb_resized, "DINOv2")
+        featup_labeled = add_label(featup_rgb_resized, "DINOv2 + LoftUp")
+
+        # Stack vertically
+        stacked = cv2.vconcat([orig_labeled, dino_labeled, featup_labeled])
+        # Also plot the stacked image
+        plt.imshow(stacked)
+        plt.savefig(os.path.join(video_folder, f'{frame_idx}.png'), bbox_inches='tight', pad_inches=0)
+        plt.close()
+        final_frames.append(stacked)
+
+    # --- Write video ---
+    out_height, out_width = final_frames[0].shape[:2]
+    video_writer = cv2.VideoWriter(os.path.join(video_folder, "feature_visualization.mp4"), cv2.VideoWriter_fourcc(*'mp4v'), 10, (out_width, out_height))
+
+    for f in final_frames:
+        video_writer.write(cv2.cvtColor(f, cv2.COLOR_RGB2BGR))
+    video_writer.release()
+
+    
+
+
+    ## Plot the original and upsampled features
+    
+
+       
 
 def restrict_neighborhood(args, h, w):
     # We restrict the set of source nodes considered to a spatial neighborhood of the query node (i.e. ``local attention'')
@@ -104,7 +205,7 @@ def label_propagation(args, model, transform, frame_tar, list_frame_feats, list_
     propagate segs of frames in list_frames to frame_tar
     """
     ## we only need to extract feature of the target frame
-    feat_tar, h, w = extract_feature(args, model, transform, frame_tar, return_h_w=True, patch_size = model.patch_size, imsize=args.imsize)
+    feat_tar, _, h, w = extract_feature(args, model, transform, frame_tar, return_h_w=True, patch_size = model.patch_size, imsize=args.imsize)
 
     # detach feat_tar
     feat_tar = feat_tar.detach().cpu()
@@ -148,11 +249,11 @@ def label_propagation(args, model, transform, frame_tar, list_frame_feats, list_
     return seg_tar.cuda(), return_feat_tar.cuda(), mask_neighborhood.cuda()
 
 
-def extract_feature(args, model, transform, frame, return_h_w=False, patch_size=16, imsize=224):
+def extract_feature(args, model, transform, frame, return_h_w=False, patch_size=16, imsize=224, return_origianl_feat=False):
     """Extract one frame feature everytime."""
     with torch.no_grad():
         frame = transform(frame)
-        out = model(frame.unsqueeze(0).cuda())
+        out, original_out = model(frame.unsqueeze(0).cuda(), return_origianl_feat=return_origianl_feat)
     if args.upsampler_path is not None:
         h, w = frame.shape[1] // 2, frame.shape[2] // 2
     else:
@@ -162,9 +263,11 @@ def extract_feature(args, model, transform, frame, return_h_w=False, patch_size=
     dim = out.shape[-1]
     out = out[0].reshape(h, w, dim)
     out = out.reshape(-1, dim)
+    if original_out is not None:
+        original_out = original_out.reshape(-1, dim)    
     if return_h_w:
-        return out, h, w
-    return out
+        return out, original_out, h, w
+    return out, original_out
 
 
 def imwrite_indexed(filename, array, color_palette):

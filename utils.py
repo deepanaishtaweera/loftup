@@ -53,13 +53,18 @@ def pca(image_feats_list, dim=3, fit_pca=None, use_torch_pca=True, max_samples=N
     device = image_feats_list[0].device
 
     def flatten(tensor, target_size=None):
+        if len(tensor.shape) == 2:
+            return tensor.detach().cpu()
         if target_size is not None and fit_pca is None:
             tensor = F.interpolate(tensor, (target_size, target_size), mode="bilinear")
         B, C, H, W = tensor.shape
         return tensor.permute(1, 0, 2, 3).reshape(C, B * H * W).permute(1, 0).detach().cpu()
 
     if len(image_feats_list) > 1 and fit_pca is None:
-        target_size = image_feats_list[0].shape[2]
+        if len(image_feats_list[0].shape) == 2:
+            target_size = None
+        else:
+            target_size = image_feats_list[0].shape[2]
     else:
         target_size = None
 
@@ -86,8 +91,11 @@ def pca(image_feats_list, dim=3, fit_pca=None, use_torch_pca=True, max_samples=N
             x_red = torch.from_numpy(x_red)
         x_red -= x_red.min(dim=0, keepdim=True).values
         x_red /= x_red.max(dim=0, keepdim=True).values
-        B, C, H, W = feats.shape
-        reduced_feats.append(x_red.reshape(B, H, W, dim).permute(0, 3, 1, 2).to(device))
+        if len(feats.shape) == 2:
+            reduced_feats.append(x_red) # 1D
+        else:
+            B, C, H, W = feats.shape
+            reduced_feats.append(x_red.reshape(B, H, W, dim).permute(0, 3, 1, 2).to(device)) # 3D
 
     return reduced_feats, fit_pca
 
