@@ -10,6 +10,9 @@
 
 ![Teaser2](figures/teaser-2.png)
 
+[Motor jump](https://github.com/user-attachments/assets/239b9230-1112-4090-a5f5-7d38acf519c0)
+
+[Dog](https://github.com/user-attachments/assets/fb4cec0c-2a36-42b0-af01-6a2e6d72d3aa)
 
 ## Contents
 - [Install](https://github.com/andrehuang/loftup/tree/main?tab=readme-ov-file#install)
