@@ -149,7 +149,9 @@ def plot_video_features_davis(args, model, transform, frame_list, video_dir):
         featup_labeled = add_label(featup_rgb_resized, "DINOv2 + LoftUp")
 
         # Stack vertically
-        stacked = cv2.vconcat([orig_labeled, dino_labeled, featup_labeled])
+        separator_thickness = 10  # pixels
+        separator = np.ones((separator_thickness, orig_labeled.shape[1], 3), dtype=np.uint8) * 0  # black separator
+        stacked = cv2.vconcat([orig_labeled, separator, dino_labeled, separator, featup_labeled])
         # Also plot the stacked image
         plt.imshow(stacked)
         plt.savefig(os.path.join(video_folder, f'{frame_idx}.png'), bbox_inches='tight', pad_inches=0)
