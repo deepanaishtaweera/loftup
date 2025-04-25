@@ -137,23 +137,30 @@ def plot_video_features_davis(args, model, transform, frame_list, video_dir):
 
         # Convert features to RGB images
         dino_rgb = feature_to_rgb(f_small, (feat_size, feat_size))
-        featup_rgb = feature_to_rgb(f_big, (up_size, up_size))
+        loftup_rgb = feature_to_rgb(f_big, (up_size, up_size))
 
         # Resize small DINO feature to (H, W)
         dino_rgb_resized = cv2.resize(dino_rgb, (ori_w, ori_h), interpolation=cv2.INTER_NEAREST)
-        featup_rgb_resized = cv2.resize(featup_rgb, (ori_w, ori_h), interpolation=cv2.INTER_NEAREST)
+        loftup_rgb_resized = cv2.resize(loftup_rgb, (ori_w, ori_h), interpolation=cv2.INTER_NEAREST)
 
         # Add labels
         orig_labeled = add_label(orig, "Input")
         dino_labeled = add_label(dino_rgb_resized, "DINOv2")
-        featup_labeled = add_label(featup_rgb_resized, "DINOv2 + LoftUp")
+        loftup_labeled = add_label(loftup_rgb_resized, "DINOv2 + LoftUp")
 
         # Stack vertically
         separator_thickness = 10  # pixels
-        separator = np.ones((separator_thickness, orig_labeled.shape[1], 3), dtype=np.uint8) * 0  # black separator
-        stacked = cv2.vconcat([orig_labeled, separator, dino_labeled, separator, featup_labeled])
+        # separator = np.zeros((separator_thickness, orig_labeled.shape[1], 3), dtype=np.uint8)  # black separator
+        # stacked = cv2.vconcat([orig_labeled, separator, dino_labeled, separator, loftup_labeled])
+        separator = np.ones((orig_labeled.shape[0], separator_thickness, 3), dtype=np.uint8) * 0  # black separator
+        stacked = cv2.hconcat([
+            orig_labeled,
+            separator,
+            loftup_labeled
+        ])
         # Also plot the stacked image
         plt.imshow(stacked)
+        plt.axis('off')
         plt.savefig(os.path.join(video_folder, f'{frame_idx}.png'), bbox_inches='tight', pad_inches=0)
         plt.close()
         final_frames.append(stacked)
@@ -164,13 +171,7 @@ def plot_video_features_davis(args, model, transform, frame_list, video_dir):
 
     for f in final_frames:
         video_writer.write(cv2.cvtColor(f, cv2.COLOR_RGB2BGR))
-    video_writer.release()
-
-    
-
-
-    ## Plot the original and upsampled features
-    
+    video_writer.release()    
 
        
 
