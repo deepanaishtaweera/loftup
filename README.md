@@ -1,5 +1,7 @@
 # [LoftUp: A Coordinate-Based Feature Upsampler for Vision Foundation Models](https://arxiv.org/abs/2504.14032)
 
+[Arxiv](https://arxiv.org/abs/2504.14032)
+
 [Haiwen Huang](https://andrehuang.github.io/), Anpei Chen, Volodymyr Havrylov, Andreas Geiger, Dan Zhang
 
 ![Teaser](figures/loftup-teaser.png)
