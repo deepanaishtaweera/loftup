@@ -30,7 +30,6 @@ class SigLIPFeaturizer(nn.Module):
         self.dim = 768
         siglip, _ = create_model_from_pretrained(arch)
         self.model = siglip.visual.trunk
-        self.model.make_preprocessor_external()
 
     def forward(self, img, n=1, include_cls=False):
         features = self.model.forward_features(img) # b, hxw, c

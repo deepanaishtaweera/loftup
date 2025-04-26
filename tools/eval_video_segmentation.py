@@ -157,8 +157,8 @@ def plot_video_features_davis(args, model, transform, frame_list, video_dir):
         orig = np.array(nonorm_transform(orig_pil)*255).astype(np.uint8).transpose(1, 2, 0)
         # import ipdb; ipdb.set_trace()
         # Feature shapes
-        up_size = 112
-        feat_size = 16
+        up_size = args.imsize // 2
+        feat_size = args.imsize // model.patch_size
 
         img_size = args.imsize
 
