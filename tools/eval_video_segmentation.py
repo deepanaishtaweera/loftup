@@ -172,8 +172,15 @@ def plot_video_features_davis(args, model, transform, frame_list, video_dir):
 
         # Add labels
         orig_labeled = add_label(orig, "Input")
-        dino_labeled = add_label(dino_rgb_resized, "DINOv2")
-        loftup_labeled = add_label(loftup_rgb_resized, "DINOv2 + LoftUp")
+        if args.model_type == "dinov2":
+            dino_labeled = add_label(dino_rgb_resized, "DINOv2")
+            loftup_labeled = add_label(loftup_rgb_resized, "DINOv2 + LoftUp")
+        elif args.model_type == "siglip2":
+            dino_labeled = add_label(dino_rgb_resized, "SigLIP2")
+            loftup_labeled = add_label(loftup_rgb_resized, "SigLIP2 + LoftUp")
+        elif args.model_type == "clip":
+            dino_labeled = add_label(dino_rgb_resized, "CLIP")
+            loftup_labeled = add_label(loftup_rgb_resized, "CLIP + LoftUp")
 
         # Stack vertically
         separator_thickness = 20  # pixels
