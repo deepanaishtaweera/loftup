@@ -77,6 +77,11 @@ def plot_video_features_davis(args, model, transform, frame_list, video_dir):
     """
     Plot the video features of the video
     """
+    nonorm_transform = transforms.Compose([
+            transforms.Resize(args.imsize, interpolation=transforms.InterpolationMode.BICUBIC),
+            transforms.CenterCrop(args.imsize),
+            transforms.ToTensor(),
+        ])
     os.makedirs(args.output_dir, exist_ok=True)
     os.makedirs(os.path.join(args.output_dir, f'davis_vidfeat_224'), exist_ok=True)
     output_dir = os.path.join(args.output_dir, f'davis_vidfeat_224')
@@ -85,7 +90,7 @@ def plot_video_features_davis(args, model, transform, frame_list, video_dir):
     os.makedirs(video_folder, exist_ok=True)
 
     original_imgs = []
-    features = []
+    original_features = []
     upsampled_features = []
 
     # first frame
@@ -95,7 +100,7 @@ def plot_video_features_davis(args, model, transform, frame_list, video_dir):
     frame1_feat, frame1_original_feat = extract_feature(args, model, transform, frame1, patch_size=model.patch_size, imsize=args.imsize, return_origianl_feat=True) #  dim x h*w
 
     original_imgs.append(frame1) # format: list of PIL images
-    features.append(frame1_original_feat) # format: dim x h*w
+    original_features.append(frame1_original_feat) # format: dim x h*w
     upsampled_features.append(frame1_feat) # format: dim x h*w
 
 
@@ -105,17 +110,36 @@ def plot_video_features_davis(args, model, transform, frame_list, video_dir):
         frame_tar_feat, frame_tar_original_feat = extract_feature(args, model, transform, frame_tar, patch_size=model.patch_size, imsize=args.imsize, return_origianl_feat=True) #  dim x h*w
 
         original_imgs.append(frame_tar)
-        features.append(frame_tar_original_feat)
+        original_features.append(frame_tar_original_feat)
         upsampled_features.append(frame_tar_feat)
     
     ## Perform PCA on the original features
-    original_feats_pca, fit_pca = pca(features)
+    original_feats_pca, fit_pca = pca(original_features)
     upsampled_feats_pca, _ = pca(upsampled_features, fit_pca=fit_pca)
+
 
     def add_label(frame, text):
         labeled = frame.copy()
+        height, width = labeled.shape[:2]
+        
         font = cv2.FONT_HERSHEY_SIMPLEX
-        cv2.putText(labeled, text, (20, 50), font, 1.5, (255, 255, 255), 3, cv2.LINE_AA)
+        font_scale = 1.0  # smaller font scale for small images
+        thickness = 3  # thinner line for small image
+        margin = 10  # margin from the top-left corner
+
+        # Calculate the size of the text box
+        text_size, _ = cv2.getTextSize(text, font, font_scale, thickness)
+        text_width, text_height = text_size
+
+        # Make sure text doesn't overflow
+        if text_width + 2 * margin > width:
+            font_scale = font_scale * (width - 2 * margin) / text_width
+            text_size, _ = cv2.getTextSize(text, font, font_scale, thickness)
+            text_width, text_height = text_size
+
+        position = (margin, margin + text_height)
+
+        cv2.putText(labeled, text, position, font, font_scale, (255, 255, 255), thickness, cv2.LINE_AA)
         return labeled
 
     def feature_to_rgb(feat, shape):
@@ -130,18 +154,21 @@ def plot_video_features_davis(args, model, transform, frame_list, video_dir):
     for frame_idx, (orig_pil, f_small, f_big) in enumerate(zip(original_imgs, original_feats_pca, upsampled_feats_pca)):
         # Convert original image to RGB array
 
-        orig = np.array(orig_pil)
+        orig = np.array(nonorm_transform(orig_pil)*255).astype(np.uint8).transpose(1, 2, 0)
+        # import ipdb; ipdb.set_trace()
         # Feature shapes
         up_size = 112
         feat_size = 16
+
+        img_size = args.imsize
 
         # Convert features to RGB images
         dino_rgb = feature_to_rgb(f_small, (feat_size, feat_size))
         loftup_rgb = feature_to_rgb(f_big, (up_size, up_size))
 
         # Resize small DINO feature to (H, W)
-        dino_rgb_resized = cv2.resize(dino_rgb, (ori_w, ori_h), interpolation=cv2.INTER_NEAREST)
-        loftup_rgb_resized = cv2.resize(loftup_rgb, (ori_w, ori_h), interpolation=cv2.INTER_NEAREST)
+        dino_rgb_resized = cv2.resize(dino_rgb, (img_size, img_size), interpolation=cv2.INTER_NEAREST)
+        loftup_rgb_resized = cv2.resize(loftup_rgb, (img_size, img_size), interpolation=cv2.INTER_NEAREST)
 
         # Add labels
         orig_labeled = add_label(orig, "Input")
@@ -149,15 +176,17 @@ def plot_video_features_davis(args, model, transform, frame_list, video_dir):
         loftup_labeled = add_label(loftup_rgb_resized, "DINOv2 + LoftUp")
 
         # Stack vertically
-        separator_thickness = 10  # pixels
+        separator_thickness = 20  # pixels
         # separator = np.zeros((separator_thickness, orig_labeled.shape[1], 3), dtype=np.uint8)  # black separator
         # stacked = cv2.vconcat([orig_labeled, separator, dino_labeled, separator, loftup_labeled])
         separator = np.ones((orig_labeled.shape[0], separator_thickness, 3), dtype=np.uint8) * 0  # black separator
         stacked = cv2.hconcat([
-            orig_labeled,
-            separator,
-            loftup_labeled
-        ])
+                orig_labeled,
+                separator,
+                dino_labeled,
+                separator,
+                loftup_labeled
+            ])
         # Also plot the stacked image
         plt.imshow(stacked)
         plt.axis('off')
@@ -267,7 +296,7 @@ def extract_feature(args, model, transform, frame, return_h_w=False, patch_size=
     out = out[0].reshape(h, w, dim)
     out = out.reshape(-1, dim)
     if original_out is not None:
-        original_out = original_out.reshape(-1, dim)    
+        original_out = rearrange(original_out, 'b c h w -> (b h w) c') ### Direct reshape will lead to bugs!!!   
     if return_h_w:
         return out, original_out, h, w
     return out, original_out

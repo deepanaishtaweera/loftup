@@ -43,6 +43,7 @@ class FeaturizerWithUpsampling(nn.Module):
 
     def forward(self, img, return_origianl_feat=False):
         feat = self.featurizer(img)
+        ori_feat = feat.clone()
         if self.upsampler is not None:
             ### In DAVIS Experiments, we only upsample to img//2 size; so we use guidance image of size img//2 ###
             guidance_img = F.interpolate(img, size=(img.shape[-2]//2, img.shape[-1]//2), mode='bilinear', align_corners=False)
@@ -52,7 +53,7 @@ class FeaturizerWithUpsampling(nn.Module):
         up_feat = up_feat.reshape(up_feat.shape[0], up_feat.shape[1], -1)
         up_feat = up_feat.permute(0, 2, 1)
         if return_origianl_feat:
-            return up_feat, feat
+            return up_feat, ori_feat
         else:
             return up_feat, None
     
@@ -66,7 +67,8 @@ def run_video_segmentation(args):
         mean = (0.485, 0.456, 0.406)
         std = (0.229, 0.224, 0.225)
     transform = transforms.Compose([
-            transforms.Resize((args.imsize, args.imsize), interpolation=transforms.InterpolationMode.BICUBIC),
+            transforms.Resize(args.imsize, interpolation=transforms.InterpolationMode.BICUBIC),
+            transforms.CenterCrop(args.imsize),
             transforms.ToTensor(),
             transforms.Normalize(mean=mean, std=std)
         ])
@@ -108,7 +110,6 @@ if __name__ == '__main__':
     args = parse_args()
     start_time = time.time()
     run_video_segmentation(args)
-    print(args.model_type, args.imsize, args.stride)
     # print total time taken in minutes
     print(f'Total time taken: {(time.time() - start_time) / 60:.2f} minutes')
     # print max GPU memory used in GB
