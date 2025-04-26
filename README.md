@@ -8,7 +8,9 @@
 
 **TL;DR:** LoftUp achieves the strongest feature upsampling performance at a comparable speed to bilinear upsampling.
 
-![Teaser2](figures/teaser-2.png)
+![bike-packing](examples/bike-packing.gif)
+![blackswan](examples/blackswan.gif)
+![breakdance](examples/breakdance.gif)
 
 
 ## Contents
