@@ -51,6 +51,11 @@ We provide example code for using LoftUp in [example_usage.py](example_usage.py)
 |SigLIP ViT B/16 | [siglip](featurizers/SigLIP.py) | [Google Drive Link](https://drive.google.com/file/d/1_hL1rCPbXg3HoJBfW5L_kRL9Zufa64lf/view?usp=drive_link)| andrehuang | loftup_siglip|
 |SigLIP2 ViT B/16 | [siglip2](featurizers/SigLIP.py) | [Google Drive Link](https://drive.google.com/file/d/1FnXbTqaf2ljy-TFVThalGS877oFO_rq5/view?usp=drive_link)| andrehuang | loftup_siglip2|
 
+To use torch hub checkpoints, simply run 
+```python
+model = torch.hub.load('andrehuang/loftup', model_torch_hub_name, pretrained=True)
+```
+
 More to release soon.
 
 ## Evaluation on Downstream Tasks
