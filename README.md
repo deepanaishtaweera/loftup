@@ -53,10 +53,10 @@ We provide example code for using LoftUp in [example_usage.py](example_usage.py)
 
 To use torch hub checkpoints, simply run 
 ```python
-model = torch.hub.load('andrehuang/loftup', model_torch_hub_name, pretrained=True)
+upsampler = torch.hub.load('andrehuang/loftup', model_torch_hub_name, pretrained=True)
 ```
 
-More to release soon.
+The upsampler class is defined at [UpsamplerwithChannelNorm](https://github.com/andrehuang/loftup/blob/7ce8a97e720465819a2a6b24a7c24c192da394b6/upsamplers/upsamplers.py#L109).
 
 ## Evaluation on Downstream Tasks
 
