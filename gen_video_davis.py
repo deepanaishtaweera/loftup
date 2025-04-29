@@ -29,7 +29,7 @@ from upsamplers import load_loftup_checkpoint
 torch.multiprocessing.set_sharing_strategy('file_system')
 
 class FeaturizerWithUpsampling(nn.Module):
-    def __init__(self, model_type, upsampler_path=None):
+    def __init__(self, model_type, upsampler_path=None, add_featup=False):
         super(FeaturizerWithUpsampling, self).__init__()
         self.featurizer, patch_size, dim = get_featurizer(model_type)
         self.featurizer = self.featurizer.to('cuda')
@@ -38,6 +38,12 @@ class FeaturizerWithUpsampling(nn.Module):
         self.featurizer.eval()
         if upsampler_path is not None:
             self.upsampler = load_loftup_checkpoint(upsampler_path, dim)
+            self.upsampler.to('cuda')
+            self.upsampler.eval()
+        else:
+            ## Assuming using pretrained FeatUp as the upsampler
+            featup_upsampler = torch.hub.load("mhamilton723/FeatUp", 'dinov2')
+            self.upsampler = featup_upsampler.upsampler
             self.upsampler.to('cuda')
             self.upsampler.eval()
 

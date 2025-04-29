@@ -174,7 +174,10 @@ def plot_video_features_davis(args, model, transform, frame_list, video_dir):
         orig_labeled = add_label(orig, "Input")
         if args.model_type == "dinov2":
             dino_labeled = add_label(dino_rgb_resized, "DINOv2")
-            loftup_labeled = add_label(loftup_rgb_resized, "DINOv2 + LoftUp")
+            if args.upsampler_path is not None:
+                loftup_labeled = add_label(loftup_rgb_resized, "DINOv2 + LoftUp")
+            else:
+                loftup_labeled = add_label(loftup_rgb_resized, "DINOv2 + FeatUp")
         elif args.model_type == "siglip2":
             dino_labeled = add_label(dino_rgb_resized, "SigLIP2")
             loftup_labeled = add_label(loftup_rgb_resized, "SigLIP2 + LoftUp")
@@ -293,12 +296,13 @@ def extract_feature(args, model, transform, frame, return_h_w=False, patch_size=
     with torch.no_grad():
         frame = transform(frame)
         out, original_out = model(frame.unsqueeze(0).cuda(), return_origianl_feat=return_origianl_feat)
-    if args.upsampler_path is not None:
-        h, w = frame.shape[1] // 2, frame.shape[2] // 2
-    else:
-        #### Use certain upsampling in the extractor; to 8x times the original size ####
-        h, w = frame.shape[1]//2, frame.shape[2]//2
+    h, w = frame.shape[1]//2, frame.shape[2]//2
 
+    if out.shape[-2] != h*w:
+        out_h = int(np.sqrt(out.shape[-2]))
+        out = out[0].reshape(out_h, out_h, -1).permute(2, 0, 1).unsqueeze(0)
+        out = F.interpolate(out, size=(h, w), mode='bilinear', align_corners=False)
+        out = out.permute(0, 2, 3, 1)
     dim = out.shape[-1]
     out = out[0].reshape(h, w, dim)
     out = out.reshape(-1, dim)
