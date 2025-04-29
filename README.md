@@ -1,6 +1,6 @@
 # [LoftUp: A Coordinate-Based Feature Upsampler for Vision Foundation Models](https://arxiv.org/abs/2504.14032)
 
-[[Arxiv]](https://arxiv.org/abs/2504.14032)
+[[Arxiv]](https://arxiv.org/abs/2504.14032) [[Project Page]](https://andrehuang.github.io/loftup-site/)
 
 [Haiwen Huang](https://andrehuang.github.io/), Anpei Chen, Volodymyr Havrylov, Andreas Geiger, Dan Zhang
 
@@ -9,8 +9,8 @@
 **TL;DR:** LoftUp achieves the strongest feature upsampling performance at a comparable speed to bilinear upsampling.
 
 ![bike-packing](examples/bike-packing.gif)
-![blackswan](examples/blackswan.gif)
-![breakdance](examples/breakdance.gif)
+![camel](examples/clip-camel.gif)
+![horsejump](examples/siglip2-horsejump.gif)
 
 
 ## Contents
