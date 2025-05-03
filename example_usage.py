@@ -8,8 +8,9 @@ from PIL import Image, ImageOps
 import torchvision.transforms as T
 import torchvision.transforms.functional as TF
 
-featurizer_class = "dinov2"
-torch_hub_name = "loftup_dinov2s"
+featurizer_class = "dinov2" # "dinov2", "dinov2b", "dinov2s_reg", "dinov2b_reg", "clip", "siglip", "siglip2"
+torch_hub_name = "loftup_dinov2s" # "loftup_dinov2s", "loftup_dinov2b", "loftup_dinov2s_reg", "loftup_dinov2b_reg", "loftup_clip", "loftup_siglip", "loftup_siglip2"
+
 model, patch_size, dim = get_featurizer(featurizer_class)
 model = model.to('cuda')
 kernel_size = patch_size 
