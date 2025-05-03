@@ -8,13 +8,15 @@ from PIL import Image, ImageOps
 import torchvision.transforms as T
 import torchvision.transforms.functional as TF
 
-model, patch_size, dim = get_featurizer("dinov2")
+featurizer_class = "dinov2"
+torch_hub_name = "loftup_dinov2s"
+model, patch_size, dim = get_featurizer(featurizer_class)
 model = model.to('cuda')
 kernel_size = patch_size 
 lr_size = 224 // patch_size
 load_size = 224
 
-upsampler = torch.hub.load('andrehuang/loftup', "loftup_dinov2s", pretrained=True)
+upsampler = torch.hub.load('andrehuang/loftup', torch_hub_name, pretrained=True)
 upsampler = upsampler.to('cuda')
 
 image_path = "examples/sa_1.jpg"
