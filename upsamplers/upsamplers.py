@@ -6,6 +6,8 @@ from torchvision import transforms
 import torch.nn.functional as F
 from einops import rearrange
 
+from huggingface_hub import PyTorchModelHubMixin
+
 import math
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
