@@ -38,18 +38,21 @@ conda env create -f environment.yaml
 
 
 ## Inference with pretrained upsamplers
+
+All pre-trained upsamplers are available on 🤗 here: https://huggingface.co/models?search=loftup.
+
 We provide example code for using LoftUp in [example_usage.py](example_usage.py). Currently we provide:
 
 
-|Backbone Name          | Featurizer Class              | Download                                  | Torch Hub Repo | Torch Hub Name |
+|Backbone Name          | Featurizer Class              | HF hub                                  | Torch Hub Repo | Torch Hub Name |
 |-------------------| ---|------------------------------------------------|------|-----|
-| DINOv2 S/14     | [dinov2](featurizers/DINOv2.py)     | [Google Drive Link](https://drive.google.com/file/d/1Sse4gq2dCSNT-rnTVja7pG9ogIGfT0Ue/view?usp=drive_link)   | andrehuang/loftup | loftup_dinov2s|
-| DINOv2 S/14 + Reg | [dinov2s_reg](featurizers/DINOv2.py)     | [Google Drive Link](https://drive.google.com/file/d/1gzLyt4vPKZvWxt_9f8whUt9rOT0LkFlH/view?usp=drive_link)| andrehuang/loftup | loftup_dinov2s_reg|
-| DINOv2 B/14 | [dinov2b](featurizers/DINOv2.py) | [Google Drive Link](https://drive.google.com/file/d/1OloNcimH4u4LGw1G07i5BAcinFHiofsn/view?usp=sharing) | andrehuang/loftup | loftup_dinov2b|
-| DINOv2 B/14 + Reg | [dinov2b_reg](featurizers/DINOv2.py)     | [Google Drive Link](https://drive.google.com/file/d/1F-qES95VjQF_4gwigFWfJfVCLS9yaZ6w/view?usp=drive_link)|andrehuang/loftup | loftup_dinov2b_reg|
-| CLIP ViT B/16 | [clip](featurizers/CLIP.py) |[Google Drive Link](https://drive.google.com/file/d/18uBEvtugyidIu7r50A0Vk-e5vLSkUrcG/view?usp=drive_link) | andrehuang/loftup | loftup_clip|
-|SigLIP ViT B/16 | [siglip](featurizers/SigLIP.py) | [Google Drive Link](https://drive.google.com/file/d/1_hL1rCPbXg3HoJBfW5L_kRL9Zufa64lf/view?usp=drive_link)| andrehuang/loftup | loftup_siglip|
-|SigLIP2 ViT B/16 | [siglip2](featurizers/SigLIP.py) | [Google Drive Link](https://drive.google.com/file/d/1FnXbTqaf2ljy-TFVThalGS877oFO_rq5/view?usp=drive_link)| andrehuang/loftup | loftup_siglip2|
+| DINOv2 S/14     | [dinov2](featurizers/DINOv2.py)     | [haiwen/loftup-dinov2s](https://huggingface.co/haiwen/loftup-dinov2s)   | andrehuang/loftup | loftup_dinov2s|
+| DINOv2 S/14 + Reg | [dinov2s_reg](featurizers/DINOv2.py)     | [haiwen/loftup-dinov2s_reg](https://huggingface.co/haiwen/loftup-dinov2s_reg)| andrehuang/loftup | loftup_dinov2s_reg|
+| DINOv2 B/14 | [dinov2b](featurizers/DINOv2.py) | [haiwen/loftup-dinov2b](https://huggingface.co/haiwen/loftup-dinov2b) | andrehuang/loftup | loftup_dinov2b|
+| DINOv2 B/14 + Reg | [dinov2b_reg](featurizers/DINOv2.py)     | [haiwen/loftup-dinov2b_reg](https://huggingface.co/haiwen/loftup-dinov2b_reg)|andrehuang/loftup | loftup_dinov2b_reg|
+| CLIP ViT B/16 | [clip](featurizers/CLIP.py) |[haiwen/loftup-clip](https://huggingface.co/haiwen/loftup-clip) | andrehuang/loftup | loftup_clip|
+|SigLIP ViT B/16 | [siglip](featurizers/SigLIP.py) | [haiwen/loftup-siglip](https://huggingface.co/haiwen/loftup-siglip)| andrehuang/loftup | loftup_siglip|
+|SigLIP2 ViT B/16 | [siglip2](featurizers/SigLIP.py) | [haiwen/loftup-siglip2](https://huggingface.co/haiwen/loftup-siglip2)| andrehuang/loftup | loftup_siglip2|
 
 To use torch hub checkpoints, simply run 
 ```python

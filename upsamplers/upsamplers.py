@@ -14,7 +14,11 @@ import numpy as np
 import torchvision.transforms as T
 from .layers import ChannelNorm, LayerNorm, MinMaxScaler, ImplicitFeaturizer, CATransformer
 
-class LoftUp(nn.Module):
+class LoftUp(nn.Module, PyTorchModelHubMixin,
+             repo_url="https://github.com/andrehuang/loftup",
+             pipeline_tag="image-feature-extraction",
+             license="mit",
+             paper_url="https://huggingface.co/papers/2504.14032"):
     """
     We use Fourier features of images as inputs, and do cross attention with the LR features, the output is the HR features.
     """

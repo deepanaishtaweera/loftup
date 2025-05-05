@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-from huggingface_hub import PyTorchModelHubMixin
 from upsamplers.layers import ChannelNorm
 from upsamplers.upsamplers import LoftUp, UpsamplerwithChannelNorm
 from huggingface_hub import hf_hub_download
