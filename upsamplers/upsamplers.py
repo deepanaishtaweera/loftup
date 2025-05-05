@@ -16,6 +16,7 @@ import numpy as np
 import torchvision.transforms as T
 from .layers import ChannelNorm, LayerNorm, MinMaxScaler, ImplicitFeaturizer, CATransformer
 
+
 class LoftUp(nn.Module, PyTorchModelHubMixin,
              repo_url="https://github.com/andrehuang/loftup",
              pipeline_tag="image-feature-extraction",
