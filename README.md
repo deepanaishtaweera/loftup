@@ -90,7 +90,7 @@ python davis2017-evaluation/evaluation_method.py --davis_path /your_davis_data_d
 ```
 
 ### Others
-For interactive segmentation, we will provide a separate code repository later. Stay tuned!
+For interactive segmentation, please check out [iSegProbe](https://github.com/havrylovv/iSegProbe).
 
 For open-vocabulary segmentation, please check out [ProxyCLIP](https://github.com/mc-lan/ProxyCLIP).
 
