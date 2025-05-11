@@ -70,11 +70,11 @@ class SemSegEvaluator(pl.LightningModule):
             upsampler = torch.hub.load("mhamilton723/FeatUp", cfg.model_type, use_norm=False).upsampler.to("cuda")
             for param in upsampler.parameters():
                 param.requires_grad = False
-        elif upsampler_type != "no":
+        elif upsampler_type != "no": ## i.e., loftup, bilinear, etc.
             upsampler = get_upsampler(upsampler_type, n_dim, lr_size=final_size, cfg=cfg)
             if upsampler_type != "bilinear": # contains trainable weights
                 upsampler = load_upsampler_weights(upsampler, upsampler_path, n_dim)
-        elif upsampler_type == "no":
+        elif upsampler_type == "no": ## i.e., no upsampler
             upsampler = None
         else:
             raise ValueError(f"Upsampler {upsampler_type} not implemented")

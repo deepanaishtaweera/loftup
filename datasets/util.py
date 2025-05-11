@@ -1,7 +1,7 @@
 from torch.utils.data import Dataset
-from featup.datasets.COCO import Coco
-from featup.datasets.cityscapes import Cityscapes
-from featup.datasets.sa1b import SA1B
+from .COCO import Coco
+from .cityscapes import Cityscapes
+from .sa1b import SA1B
 # from featup.datasets.nyu_probe import NYU
 
 class SlicedDataset(Dataset):
