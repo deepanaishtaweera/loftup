@@ -1,6 +1,4 @@
 import matplotlib.pyplot as plt
-from featup.util import pca, remove_axes
-from featup.featurizers.maskclip.clip import tokenize
 from pytorch_lightning import seed_everything
 import torch
 import torch.nn.functional as F
@@ -9,45 +7,22 @@ import cv2
 import numpy as np
 from sklearn.decomposition import PCA
 
-@torch.no_grad()
-def plot_feats(image, lr, hr, save_name='feats.png'):
-    assert len(image.shape) == len(lr.shape) == len(hr.shape) == 3
-    seed_everything(0)
-    [lr_feats_pca, hr_feats_pca], _ = pca([lr.unsqueeze(0), hr.unsqueeze(0)])
-    fig, ax = plt.subplots(1, 3, figsize=(12, 4))
-    ax[0].imshow(image.permute(1, 2, 0).detach().cpu())
-    ax[0].set_title("Image")
-    ax[1].imshow(lr_feats_pca[0].permute(1, 2, 0).detach().cpu())
-    ax[1].set_title("Original Features")
-    ax[2].imshow(hr_feats_pca[0].permute(1, 2, 0).detach().cpu())
-    ax[2].set_title("Upsampled Features")
-    remove_axes(ax)
-    plt.savefig(save_name, bbox_inches='tight', pad_inches=0.1)
 
-class ToTensorWithoutScaling:
-    """Convert PIL image or numpy array to a PyTorch tensor without scaling the values."""
-    def __call__(self, pic):
-        # Convert the PIL Image or numpy array to a tensor (without scaling).
-        return TF.pil_to_tensor(pic).long()
+def _remove_axes(ax):
+    ax.xaxis.set_major_formatter(plt.NullFormatter())
+    ax.yaxis.set_major_formatter(plt.NullFormatter())
+    ax.set_xticks([])
+    ax.set_yticks([])
 
-class TorchPCA(object):
 
-    def __init__(self, n_components):
-        self.n_components = n_components
-
-    def fit(self, X):
-        self.mean_ = X.mean(dim=0)
-        unbiased = X - self.mean_.unsqueeze(0)
-        U, S, V = torch.pca_lowrank(unbiased, q=self.n_components, center=False, niter=4)
-        self.components_ = V.T
-        self.singular_values_ = S
-        return self
-
-    def transform(self, X):
-        t0 = X - self.mean_.unsqueeze(0)
-        projected = t0 @ self.components_.T
-        return projected
-
+def remove_axes(axes):
+    if len(axes.shape) == 2:
+        for ax1 in axes:
+            for ax in ax1:
+                _remove_axes(ax)
+    else:
+        for ax in axes:
+            _remove_axes(ax)
 
 def pca(image_feats_list, dim=3, fit_pca=None, use_torch_pca=True, max_samples=None):
     device = image_feats_list[0].device
@@ -98,6 +73,46 @@ def pca(image_feats_list, dim=3, fit_pca=None, use_torch_pca=True, max_samples=N
             reduced_feats.append(x_red.reshape(B, H, W, dim).permute(0, 3, 1, 2).to(device)) # 3D
 
     return reduced_feats, fit_pca
+
+@torch.no_grad()
+def plot_feats(image, lr, hr, save_name='feats.png'):
+    assert len(image.shape) == len(lr.shape) == len(hr.shape) == 3
+    seed_everything(0)
+    [lr_feats_pca, hr_feats_pca], _ = pca([lr.unsqueeze(0), hr.unsqueeze(0)])
+    fig, ax = plt.subplots(1, 3, figsize=(12, 4))
+    ax[0].imshow(image.permute(1, 2, 0).detach().cpu())
+    ax[0].set_title("Image")
+    ax[1].imshow(lr_feats_pca[0].permute(1, 2, 0).detach().cpu())
+    ax[1].set_title("Original Features")
+    ax[2].imshow(hr_feats_pca[0].permute(1, 2, 0).detach().cpu())
+    ax[2].set_title("Upsampled Features")
+    remove_axes(ax)
+    plt.savefig(save_name, bbox_inches='tight', pad_inches=0.1)
+
+class ToTensorWithoutScaling:
+    """Convert PIL image or numpy array to a PyTorch tensor without scaling the values."""
+    def __call__(self, pic):
+        # Convert the PIL Image or numpy array to a tensor (without scaling).
+        return TF.pil_to_tensor(pic).long()
+
+class TorchPCA(object):
+
+    def __init__(self, n_components):
+        self.n_components = n_components
+
+    def fit(self, X):
+        self.mean_ = X.mean(dim=0)
+        unbiased = X - self.mean_.unsqueeze(0)
+        U, S, V = torch.pca_lowrank(unbiased, q=self.n_components, center=False, niter=4)
+        self.components_ = V.T
+        self.singular_values_ = S
+        return self
+
+    def transform(self, X):
+        t0 = X - self.mean_.unsqueeze(0)
+        projected = t0 @ self.components_.T
+        return projected
+
 
 ADE20K_150_CATEGORIES = [
     {"color": [120, 120, 120], "id": 0, "isthing": 0, "name": "wall"},
