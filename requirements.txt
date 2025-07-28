@@ -38,3 +38,5 @@ tqdm
 transformers
 ipykernel
 rerun-sdk
+scikit-image
+cupy-cuda12x==13.3.0
