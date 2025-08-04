@@ -22,7 +22,10 @@ from torchmetrics.classification import Accuracy, JaccardIndex
 from upsamplers import load_lift_checkpoints, norm, unnorm, get_upsampler, load_upsampler_weights
 from datasets import get_dataset, EmbeddingFile
 from featurizers import get_featurizer
-from utils import ADE20K_150_CATEGORIES, pca, ToTensorWithoutScaling
+from utils import ADE20K_150_CATEGORIES, COCOSTUFF_27_CATEGORIES, pca, ToTensorWithoutScaling
+
+import rerun as rr
+import time
 
 
 class SemSegEvaluator(pl.LightningModule):
@@ -33,7 +36,10 @@ class SemSegEvaluator(pl.LightningModule):
         self.dataset = cfg.dataset
         self.upsampler_type = upsampler_type
         self.model = model
-        self.color_map = {category["id"]: np.array(category["color"]) / 255.0 for category in ADE20K_150_CATEGORIES}
+        if cfg.dataset == 'cocostuff':
+            self.color_map = {category["id"]: np.array(category["color"]) / 255.0 for category in COCOSTUFF_27_CATEGORIES}
+        else:
+            self.color_map = {category["id"]: np.array(category["color"]) / 255.0 for category in ADE20K_150_CATEGORIES}
         self.name = f"{self.dataset}_{cfg.load_size}_{cfg.upsampler_type}_{cfg.model_type}"
         self.guidance_res = cfg.guidance_res
         self.train_small_res = cfg.train_small_res
@@ -80,6 +86,9 @@ class SemSegEvaluator(pl.LightningModule):
             raise ValueError(f"Upsampler {upsampler_type} not implemented")
 
         self.upsampler = upsampler
+
+        if self.upsampler is not None:
+            self.upsampler.eval()
 
         self.linear_acc_metric = Accuracy(num_classes=n_classes, task="multiclass")
         self.linear_acc_buff = self.register_buffer("linear_acc", torch.tensor(0.0))
@@ -185,46 +194,63 @@ class SemSegEvaluator(pl.LightningModule):
         seg_pred_rgb = np.zeros((*seg_pred.shape, 3), dtype=np.float32)
         gt_sem_seg_rgb = np.zeros((*gt_sem_seg.shape, 3), dtype=np.float32)
 
-        for class_id, color in self.color_map.items():
-            seg_pred_rgb[seg_pred == class_id] = color
-            gt_sem_seg_rgb[gt_sem_seg == class_id] = color
+        # for class_id, color in self.color_map.items():
+        #     seg_pred_rgb[seg_pred == class_id] = color
+        #     gt_sem_seg_rgb[gt_sem_seg == class_id] = color
 
         pca_feats = feats.transpose(1, 2, 0)
 
         # Overlay predictions and ground truth on the original image
-        alpha = 0.8  # Transparency for overlay
+        # alpha = 0.8  # Transparency for overlay
         # Ensure the shapes of the overlays are the same
-        seg_pred_rgb = cv2.resize(seg_pred_rgb, (original_image.shape[1], original_image.shape[0]))
-        gt_sem_seg_rgb = cv2.resize(gt_sem_seg_rgb, (original_image.shape[1], original_image.shape[0]))
-        seg_pred_overlay = (1 - alpha) * original_image + alpha * seg_pred_rgb
-        gt_overlay = (1 - alpha) * original_image + alpha * gt_sem_seg_rgb
+        # seg_pred_rgb = cv2.resize(seg_pred_rgb, (original_image.shape[1], original_image.shape[0]))
+        # gt_sem_seg_rgb = cv2.resize(gt_sem_seg_rgb, (original_image.shape[1], original_image.shape[0]))
+        # seg_pred_overlay = (1 - alpha) * original_image + alpha * seg_pred_rgb
+        # gt_overlay = (1 - alpha) * original_image + alpha * gt_sem_seg_rgb
+
+        # log to rerun
+        rr.set_time(timeline="frame", sequence=img_idx)
+        # Assign a label and color to each class
+        if self.dataset == 'cocostuff':
+            categories = COCOSTUFF_27_CATEGORIES
+        else:
+            categories = ADE20K_150_CATEGORIES
+        labels_mapping = [
+            rr.AnnotationInfo(id=i, label=label["name"], color=label["color"])
+            for i,label in enumerate(categories)
+        ]
+        rr.log("cocostuff", rr.AnnotationContext(labels_mapping), static=True)
+        rr.log("cocostuff/original_image", rr.Image(original_image))
+        rr.log("cocostuff/pca_feats", rr.Image(pca_feats, color_model="rgb"))
+        rr.log("cocostuff/segmentation_prediction", rr.SegmentationImage(seg_pred))
+        rr.log("cocostuff/ground_truth", rr.SegmentationImage(gt_sem_seg))
 
         # Plot results
-        plt.figure(figsize=(20, 5))
+        # plt.figure(figsize=(20, 5))
 
-        plt.subplot(1, 4, 1)
-        plt.imshow(original_image)
-        plt.title("Original Image")
-        plt.axis("off")
+        # plt.subplot(1, 4, 1)
+        # plt.imshow(original_image)
+        # plt.title("Original Image")
+        # plt.axis("off")
 
-        plt.subplot(1, 4, 2)
-        plt.imshow(pca_feats)
-        plt.title("Feature Visualization (PCA)")
-        plt.axis("off")
+        # plt.subplot(1, 4, 2)
+        # plt.imshow(pca_feats)
+        # plt.title("Feature Visualization (PCA)")
+        # plt.axis("off")
 
-        plt.subplot(1, 4, 3)
-        plt.imshow(seg_pred_overlay)
-        plt.title("Segmentation Prediction")
-        plt.axis("off")
+        # plt.subplot(1, 4, 3)
+        # plt.imshow(seg_pred_overlay)
+        # plt.title("Segmentation Prediction")
+        # plt.axis("off")
 
-        plt.subplot(1, 4, 4)
-        plt.imshow(gt_overlay)
-        plt.title("Ground Truth Overlay")
-        plt.axis("off")
+        # plt.subplot(1, 4, 4)
+        # plt.imshow(gt_overlay)
+        # plt.title("Ground Truth Overlay")
+        # plt.axis("off")
 
-        # plt.tight_layout()
-        plt.savefig(f"visualization/{name}_seg_results_{img_idx}.png", bbox_inches="tight")
-        plt.close()
+        # # plt.tight_layout()
+        # plt.savefig(f"visualisation/{name}_seg_results_{img_idx}.png", bbox_inches="tight")
+        # plt.close()
 
     def on_validation_epoch_end(self):
         self.linear_acc = self.linear_acc_metric.compute()
@@ -247,11 +273,18 @@ class SemSegEvaluator(pl.LightningModule):
         return torch.optim.NAdam(self.classifier.parameters(), lr=self.lr)
 
 
+def setup_rerun():
+    rr.init("cocostuff-dinov2s_reg", recording_id="cocostuff-dinov2s_reg")
+    current_time = time.strftime("%Y%m%d_%H%M%S")
+    rr.save(f"/root/repos/vlmaps/data/rerun/cocostuff/dinov2s_reg_eval_{current_time}.rrd")
+
+
 @hydra.main(config_path="configs", config_name="eval_seg.yaml")
 def my_app(cfg: DictConfig) -> None:
     print(OmegaConf.to_yaml(cfg))
     print(cfg.output_root)
     seed_everything(seed=0, workers=True)
+    setup_rerun()
 
     log_dir = join(cfg.output_root, f"logs/eval/semseg")
     name = (f"{cfg.model_type}_{cfg.upsampler_type}_"
