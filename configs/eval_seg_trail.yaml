@@ -1,0 +1,18 @@
+# --- Paths ---
+# Directory containing your custom images to evaluate
+image_dir: "/root/repos/vlmaps/data/allmend_trail_recording_2025_12_06_full_trail_zed_sdk/images"
+# Directory where the Rerun .rrd log file will be saved
+output_root: "/root/repos/vlmaps/data/allmend_trail_recording_2025_12_06_full_trail_zed_sdk/rerun"
+# Path to the trained classifier checkpoint
+classifier_checkpoint: "/root/.cache/huggingface/hub/models--haiwen--loftup-dinov2s_reg/snapshots/35b4fc9287c0411c1b68abfe47b43d5b36965792/pytorch_modecocostuff_224_classifier.ckpt"
+# Path to the upsampler weights (if applicable, otherwise null)
+upsampler_path: "/root/.cache/huggingface/hub/models--haiwen--loftup-dinov2s_reg/snapshots/35b4fc9287c0411c1b68abfe47b43d5b36965792/pytorch_model.bin"
+
+# --- Model Config ---
+model_type: "dinov2s_reg"
+upsampler_type: "loftup"
+
+# --- Image & Feature Sizes ---
+load_size: 224
+guidance_res: 224
+lr_size: 16 # Dummy value, might be needed by get_upsampler

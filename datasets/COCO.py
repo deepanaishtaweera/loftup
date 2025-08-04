@@ -19,10 +19,10 @@ class Coco(Dataset):
         super(Coco, self).__init__()
         self.split = split
         self.root = join(root, "cocostuff")
-        self.coarse_labels = coarse_labels
+        # self.coarse_labels = coarse_labels
         self.transform = transform
         self.label_transform = target_transform
-        self.exclude_things = exclude_things
+        # self.exclude_things = exclude_things
         self.include_labels = include_labels
 
         ## Download the curated folder from https://www.robots.ox.ac.uk/~xuji/datasets/COCOStuff164kCurated.tar.gz

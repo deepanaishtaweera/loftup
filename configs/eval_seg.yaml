@@ -1,17 +1,17 @@
 # Environment Args
 output_root: 'output_dir' # '../output_root'
-pytorch_data_dir: 'datasets' # '/mnt/haiwen/datasets'
+pytorch_data_dir: '/root/repos/vlmaps/data' # '/mnt/haiwen/datasets'
 
 # Dataset args
 dataset: "cocostuff"
 
 # Model Args
-model_type: "dinov2"
+model_type: "dinov2s_reg"
 activation_type: "token"
 
 # Upsampling args
 upsampler_type: "loftup"
-upsampler_path: ""
+upsampler_path: "/root/.cache/huggingface/hub/models--haiwen--loftup-dinov2s_reg/snapshots/35b4fc9287c0411c1b68abfe47b43d5b36965792/pytorch_model.bin"
 
 # Training args
 batch_size: 8
@@ -31,5 +31,6 @@ hydra:
     dir: "."
   output_subdir: ~
 
-use_pretrained_classifier: False
-visualize: False
+use_pretrained_classifier: True
+pretrained_classifier_path: "/root/.cache/huggingface/hub/models--haiwen--loftup-dinov2s_reg/snapshots/35b4fc9287c0411c1b68abfe47b43d5b36965792/pytorch_modecocostuff_224_classifier.ckpt"
+visualize: True

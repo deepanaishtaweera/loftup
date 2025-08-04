@@ -163,9 +163,10 @@ def get_upsampler(upsampler, dim, lr_size=16, n_freqs=20, cfg=None, cat_lr_feats
 
 def load_upsampler_weights(upsampler, upsampler_path, dim, freeze=True):
     channelnorm = ChannelNorm(dim)
-    ckpt_weight = torch.load(upsampler_path)['state_dict']
-    channelnorm_checkpoint = {k: v for k, v in ckpt_weight.items() if 'model.1' in k} # dict_keys(['model.1.norm.weight', 'model.1.norm.bias'])
-    channelnorm_checkpoint = {k.replace('model.1.', ''): v for k, v in channelnorm_checkpoint.items()}
+    raw_ckpt = torch.load(upsampler_path)
+    ckpt_weight = raw_ckpt['state_dict'] if 'state_dict' in raw_ckpt else raw_ckpt
+    channelnorm_checkpoint = {k: v for k, v in ckpt_weight.items() if 'channelnorm.' in k} # dict_keys(['model.1.norm.weight', 'model.1.norm.bias'])
+    channelnorm_checkpoint = {k.replace('channelnorm.', ''): v for k, v in channelnorm_checkpoint.items()}
     upsampler_ckpt_weight = {k: v for k, v in ckpt_weight.items() if k.startswith('upsampler')}
     upsampler_ckpt_weight = {k.replace('upsampler.', ''): v for k, v in upsampler_ckpt_weight.items()}
 
