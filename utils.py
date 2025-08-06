@@ -24,6 +24,7 @@ def remove_axes(axes):
         for ax in axes:
             _remove_axes(ax)
 
+
 def pca(image_feats_list, dim=3, fit_pca=None, use_torch_pca=True, max_samples=None):
     device = image_feats_list[0].device
 
@@ -33,7 +34,13 @@ def pca(image_feats_list, dim=3, fit_pca=None, use_torch_pca=True, max_samples=N
         if target_size is not None and fit_pca is None:
             tensor = F.interpolate(tensor, (target_size, target_size), mode="bilinear")
         B, C, H, W = tensor.shape
-        return tensor.permute(1, 0, 2, 3).reshape(C, B * H * W).permute(1, 0).detach().cpu()
+        return (
+            tensor.permute(1, 0, 2, 3)
+            .reshape(C, B * H * W)
+            .permute(1, 0)
+            .detach()
+            .cpu()
+        )
 
     if len(image_feats_list) > 1 and fit_pca is None:
         if len(image_feats_list[0].shape) == 2:
@@ -67,15 +74,18 @@ def pca(image_feats_list, dim=3, fit_pca=None, use_torch_pca=True, max_samples=N
         x_red -= x_red.min(dim=0, keepdim=True).values
         x_red /= x_red.max(dim=0, keepdim=True).values
         if len(feats.shape) == 2:
-            reduced_feats.append(x_red) # 1D
+            reduced_feats.append(x_red)  # 1D
         else:
             B, C, H, W = feats.shape
-            reduced_feats.append(x_red.reshape(B, H, W, dim).permute(0, 3, 1, 2).to(device)) # 3D
+            reduced_feats.append(
+                x_red.reshape(B, H, W, dim).permute(0, 3, 1, 2).to(device)
+            )  # 3D
 
     return reduced_feats, fit_pca
 
+
 @torch.no_grad()
-def plot_feats(image, lr, hr, save_name='feats.png'):
+def plot_feats(image, lr, hr, save_name="feats.png"):
     assert len(image.shape) == len(lr.shape) == len(hr.shape) == 3
     seed_everything(0)
     [lr_feats_pca, hr_feats_pca], _ = pca([lr.unsqueeze(0), hr.unsqueeze(0)])
@@ -87,13 +97,16 @@ def plot_feats(image, lr, hr, save_name='feats.png'):
     ax[2].imshow(hr_feats_pca[0].permute(1, 2, 0).detach().cpu())
     ax[2].set_title("Upsampled Features")
     remove_axes(ax)
-    plt.savefig(save_name, bbox_inches='tight', pad_inches=0.1)
+    plt.savefig(save_name, bbox_inches="tight", pad_inches=0.1)
+
 
 class ToTensorWithoutScaling:
     """Convert PIL image or numpy array to a PyTorch tensor without scaling the values."""
+
     def __call__(self, pic):
         # Convert the PIL Image or numpy array to a tensor (without scaling).
         return TF.pil_to_tensor(pic).long()
+
 
 class TorchPCA(object):
 
@@ -103,7 +116,9 @@ class TorchPCA(object):
     def fit(self, X):
         self.mean_ = X.mean(dim=0)
         unbiased = X - self.mean_.unsqueeze(0)
-        U, S, V = torch.pca_lowrank(unbiased, q=self.n_components, center=False, niter=4)
+        U, S, V = torch.pca_lowrank(
+            unbiased, q=self.n_components, center=False, niter=4
+        )
         self.components_ = V.T
         self.singular_values_ = S
         return self
@@ -112,6 +127,49 @@ class TorchPCA(object):
         t0 = X - self.mean_.unsqueeze(0)
         projected = t0 @ self.components_.T
         return projected
+
+
+def compute_traversability_from_logits(logits, temperature=0.2):
+    """
+    Compute traversability prediction from segmentation logits.
+
+    Args:
+        logits (torch.Tensor): Segmentation logits of shape (B, num_classes, H, W) or (num_classes, H, W)
+        temperature (float): Temperature for softmax scaling. Default: 0.2
+
+    Returns:
+        torch.Tensor: Traversability prediction of shape (B, H, W) or (H, W) with values in [0, 1]
+    """
+    # Ensure logits has the right shape
+    if len(logits.shape) == 3:
+        # (num_classes, H, W) -> (1, num_classes, H, W)
+        logits = logits.unsqueeze(0)
+        squeeze_output = True
+    else:
+        squeeze_output = False
+
+    # Apply softmax with temperature scaling
+    probs = F.softmax(logits / temperature, dim=1)  # (B, num_classes, H, W)
+
+    # Construct traversability scores tensor from TRAVERSABILITY_SCORES
+    traversability_scores = torch.tensor(
+        [
+            TRAVERSABILITY_SCORES.get(i, 0.1)
+            for i in range(len(COCOSTUFF_27_CATEGORIES))
+        ],
+        device=logits.device,
+    )
+    traversability_scores = traversability_scores.view(
+        1, -1, 1, 1
+    )  # (1, num_classes, 1, 1)
+
+    # Multiply probabilities by traversability scores and sum across classes
+    traversability_pred = (probs * traversability_scores).sum(dim=1)  # (B, H, W)
+
+    if squeeze_output:
+        traversability_pred = traversability_pred.squeeze(0)  # (H, W)
+
+    return traversability_pred
 
 
 ADE20K_150_CATEGORIES = [
@@ -171,11 +229,21 @@ ADE20K_150_CATEGORIES = [
     {"color": [140, 140, 140], "id": 48, "isthing": 0, "name": "skyscraper"},
     {"color": [250, 10, 15], "id": 49, "isthing": 1, "name": "fireplace"},
     {"color": [20, 255, 0], "id": 50, "isthing": 1, "name": "refrigerator, icebox"},
-    {"color": [31, 255, 0], "id": 51, "isthing": 0, "name": "grandstand, covered stand"},
+    {
+        "color": [31, 255, 0],
+        "id": 51,
+        "isthing": 0,
+        "name": "grandstand, covered stand",
+    },
     {"color": [255, 31, 0], "id": 52, "isthing": 0, "name": "path"},
     {"color": [255, 224, 0], "id": 53, "isthing": 1, "name": "stairs"},
     {"color": [153, 255, 0], "id": 54, "isthing": 0, "name": "runway"},
-    {"color": [0, 0, 255], "id": 55, "isthing": 1, "name": "case, display case, showcase, vitrine"},
+    {
+        "color": [0, 0, 255],
+        "id": 55,
+        "isthing": 1,
+        "name": "case, display case, showcase, vitrine",
+    },
     {
         "color": [255, 71, 0],
         "id": 56,
@@ -209,14 +277,24 @@ ADE20K_150_CATEGORIES = [
     {"color": [173, 255, 0], "id": 76, "isthing": 1, "name": "boat"},
     {"color": [0, 255, 153], "id": 77, "isthing": 0, "name": "bar"},
     {"color": [255, 92, 0], "id": 78, "isthing": 1, "name": "arcade machine"},
-    {"color": [255, 0, 255], "id": 79, "isthing": 0, "name": "hovel, hut, hutch, shack, shanty"},
+    {
+        "color": [255, 0, 255],
+        "id": 79,
+        "isthing": 0,
+        "name": "hovel, hut, hutch, shack, shanty",
+    },
     {"color": [255, 0, 245], "id": 80, "isthing": 1, "name": "bus"},
     {"color": [255, 0, 102], "id": 81, "isthing": 1, "name": "towel"},
     {"color": [255, 173, 0], "id": 82, "isthing": 1, "name": "light"},
     {"color": [255, 0, 20], "id": 83, "isthing": 1, "name": "truck"},
     {"color": [255, 184, 184], "id": 84, "isthing": 0, "name": "tower"},
     {"color": [0, 31, 255], "id": 85, "isthing": 1, "name": "chandelier"},
-    {"color": [0, 255, 61], "id": 86, "isthing": 1, "name": "awning, sunshade, sunblind"},
+    {
+        "color": [0, 255, 61],
+        "id": 86,
+        "isthing": 1,
+        "name": "awning, sunshade, sunblind",
+    },
     {"color": [0, 71, 255], "id": 87, "isthing": 1, "name": "street lamp"},
     {"color": [255, 0, 204], "id": 88, "isthing": 1, "name": "booth"},
     {"color": [0, 255, 194], "id": 89, "isthing": 1, "name": "tv"},
@@ -244,7 +322,12 @@ ADE20K_150_CATEGORIES = [
         "name": "ottoman, pouf, pouffe, puff, hassock",
     },
     {"color": [0, 255, 10], "id": 98, "isthing": 1, "name": "bottle"},
-    {"color": [255, 112, 0], "id": 99, "isthing": 0, "name": "buffet, counter, sideboard"},
+    {
+        "color": [255, 112, 0],
+        "id": 99,
+        "isthing": 0,
+        "name": "buffet, counter, sideboard",
+    },
     {
         "color": [143, 255, 0],
         "id": 100,
@@ -341,3 +424,35 @@ COCOSTUFF_27_CATEGORIES = [
     {"color": [0, 96, 0], "id": 25, "isthing": 0, "name": "structural-stuff"},
     {"color": [0, 0, 96], "id": 26, "isthing": 0, "name": "water-stuff"},
 ]
+
+# Direct mapping from class ID to traversability score for COCOSTUFF_27_CATEGORIES
+# This is much more efficient than the previous list format
+TRAVERSABILITY_SCORES = {
+    0: 0.0,  # electronic-things
+    1: 0.0,  # appliance-things
+    2: 0.0,  # food-things
+    3: 0.0,  # furniture-things
+    4: 0.0,  # indoor-things
+    5: 0.0,  # kitchen-things
+    6: 0.0,  # accessory-things
+    7: 0.0,  # animal-things
+    8: 0.5,  # outdoor-things
+    9: 0.0,  # person-things
+    10: 0.0,  # sports-things
+    11: 0.0,  # vehicle-things
+    12: 0.0,  # ceiling-stuff
+    13: 1.0,  # floor-stuff
+    14: 0.0,  # food-stuff
+    15: 0.0,  # furniture-stuff
+    16: 0.3,  # rawmaterial-stuff
+    17: 0.0,  # textile-stuff
+    18: 0.0,  # wall-stuff
+    19: 0.0,  # window-stuff
+    20: 0.0,  # building-stuff
+    21: 1.0,  # ground-stuff
+    22: 0.2,  # plant-stuff
+    23: 0.0,  # sky-stuff
+    24: 0.5,  # solid-stuff
+    25: 0.1,  # structural-stuff
+    26: 0.2,  # water-stuff
+}
